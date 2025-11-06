@@ -7,10 +7,12 @@
     <style>
         :root {
             color-scheme: dark light;
-            --bg: #061428;
-            --card: rgba(14, 32, 64, 0.82);
-            --accent: #40c4ff;
+            --bg: #04172e;
+            --card: rgba(10, 30, 62, 0.85);
+            --accent: #48d1ff;
+            --accent-soft: rgba(72, 209, 255, 0.2);
             --text: #e8f1ff;
+            --muted: rgba(232, 241, 255, 0.82);
         }
 
         * {
@@ -21,100 +23,300 @@
             margin: 0;
             min-height: 100vh;
             font-family: "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(160deg, var(--bg), #103a69 55%, #051b2d 100%);
+            background: radial-gradient(circle at 20% 20%, rgba(90, 160, 255, 0.2), transparent 46%),
+                linear-gradient(160deg, var(--bg), #0a2d55 55%, #031222 100%);
             color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 16px;
+            padding: clamp(32px, 6vw, 64px) 16px;
         }
 
         main {
-            width: min(720px, 100%);
+            width: min(900px, 100%);
             background: var(--card);
-            border-radius: 28px;
-            padding: clamp(24px, 6vw, 48px);
-            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(14px);
+            border-radius: 30px;
+            padding: clamp(28px, 6vw, 52px);
+            box-shadow: 0 28px 82px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(16px);
+            display: grid;
+            gap: clamp(28px, 6vw, 46px);
         }
 
         h1 {
-            margin: 0 0 12px;
-            font-size: clamp(2.2rem, 4vw, 3.4rem);
-            letter-spacing: 0.06em;
+            margin: 0;
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            letter-spacing: 0.08em;
             text-transform: uppercase;
         }
 
+        h2 {
+            margin: 0 0 12px;
+            font-size: clamp(1.4rem, 2.8vw, 2rem);
+            letter-spacing: 0.02em;
+        }
+
         p {
-            margin: 0 0 20px;
+            margin: 0;
             line-height: 1.7;
-            color: rgba(232, 241, 255, 0.82);
+            color: var(--muted);
         }
 
         code {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 8px;
-            background: rgba(9, 24, 48, 0.8);
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: rgba(9, 30, 54, 0.88);
             color: var(--accent);
             font-size: 0.95rem;
         }
 
         ul {
             padding-left: 20px;
-            margin: 0 0 24px;
+            margin: 0;
         }
 
         li + li {
-            margin-top: 12px;
-        }
-
-        footer {
-            margin-top: 30px;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            margin-top: 10px;
         }
 
         a {
             color: var(--accent);
         }
+
+        .hero {
+            display: grid;
+            gap: 16px;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+        }
+
+        .hero-wrap {
+            display: grid;
+            gap: clamp(24px, 5vw, 40px);
+        }
+
+        .preview-grid {
+            display: grid;
+            gap: clamp(18px, 3vw, 28px);
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .feature-card {
+            padding: 20px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(18, 42, 78, 0.9), rgba(12, 30, 54, 0.88));
+            border: 1px solid rgba(90, 170, 255, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(90, 170, 255, 0.12);
+            display: grid;
+            gap: 10px;
+        }
+
+        .plane-preview {
+            position: relative;
+            height: 200px;
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(35, 70, 140, 0.18), rgba(2, 12, 28, 0.8));
+            box-shadow: inset 0 0 0 1px rgba(90, 170, 255, 0.18);
+            overflow: hidden;
+        }
+
+        .plane-preview::before {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            background: radial-gradient(circle at 60% 20%, rgba(120, 210, 255, 0.35), transparent 70%),
+                radial-gradient(circle at 20% 80%, rgba(255, 150, 110, 0.28), transparent 65%);
+            filter: blur(0.5px);
+        }
+
+        .plane-body {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            width: 180px;
+            height: 80px;
+            transform: translate(-50%, -50%) rotateX(30deg) rotateY(0deg);
+            transform-style: preserve-3d;
+            animation: bank 4.4s ease-in-out infinite;
+        }
+
+        .plane-fuselage {
+            position: absolute;
+            inset: 0;
+            border-radius: 60px;
+            background: linear-gradient(90deg, #d9f0ff, #7fb5ff 50%, #d4ecff 100%);
+            box-shadow: 0 18px 28px rgba(0, 0, 0, 0.32);
+            z-index: 3;
+        }
+
+        .plane-wing,
+        .plane-tail {
+            position: absolute;
+            background: linear-gradient(120deg, rgba(255, 120, 100, 0.95), rgba(255, 200, 170, 0.9));
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+        }
+
+        .plane-wing {
+            width: 220px;
+            height: 34px;
+            top: 22px;
+            left: -20px;
+            border-radius: 20px;
+            transform: rotateX(40deg);
+            z-index: 2;
+        }
+
+        .plane-tail {
+            width: 90px;
+            height: 30px;
+            left: -20px;
+            top: 14px;
+            border-radius: 16px;
+            transform: rotateX(40deg) rotateZ(-16deg);
+            z-index: 1;
+        }
+
+        .plane-cockpit {
+            position: absolute;
+            width: 76px;
+            height: 38px;
+            top: 8px;
+            left: 62px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgba(40, 70, 120, 0.85), rgba(150, 210, 255, 0.9));
+            z-index: 4;
+        }
+
+        .plane-trail {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            left: -72px;
+            top: 44px;
+            background: radial-gradient(circle, rgba(255, 170, 130, 0.8), transparent 70%);
+            filter: blur(12px);
+            opacity: 0.8;
+            animation: trail 1.8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes bank {
+            0%,
+            100% {
+                transform: translate(-50%, -50%) rotateX(30deg) rotateY(-12deg) rotateZ(-4deg);
+            }
+            50% {
+                transform: translate(-50%, -50%) rotateX(30deg) rotateY(16deg) rotateZ(5deg);
+            }
+        }
+
+        @keyframes trail {
+            0%,
+            100% {
+                transform: scale(0.9);
+                opacity: 0.65;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.95;
+            }
+        }
+
+        .list-section {
+            display: grid;
+            gap: 16px;
+        }
+
+        .list-section ul {
+            background: rgba(4, 18, 36, 0.45);
+            padding: 18px 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(90, 170, 255, 0.18);
+            box-shadow: inset 0 0 0 1px rgba(72, 209, 255, 0.08);
+        }
+
+        footer {
+            margin-top: 0;
+            font-size: 0.95rem;
+            color: rgba(232, 241, 255, 0.74);
+        }
+
+        @media (max-width: 620px) {
+            .plane-preview {
+                height: 160px;
+            }
+
+            .plane-body {
+                transform: translate(-50%, -50%) scale(0.8) rotateX(30deg);
+            }
+        }
     </style>
 </head>
 <body>
 <main>
-    <h1>Plane Jumpers</h1>
-    <p>
-        Plane Jumpers now plays like a neon-flight remix of Subway Surfers. Bank a shimmering
-        stunt plane through a pseudo-3D skyline, skim glowing rings, and dodge drones and
-        turbulence pods that streak toward the camera. Procedural lighting, parallax clouds,
-        and speed trails sell the depth without shipping any texture files.
-    </p>
+    <section class="hero-wrap">
+        <div class="hero">
+            <h1>Plane Jumpers</h1>
+            <p>
+                Chase rings through a sunlit skyline in this aero-runner inspired by Subway Surfers. The latest
+                build delivers camera-swayed perspective, a high-altitude runway, and a sculpted stunt plane that
+                banks, trails, and glows like it just cleared a cloud stack.
+            </p>
+        </div>
+        <div class="preview-grid">
+            <div class="plane-preview">
+                <div class="plane-body">
+                    <span class="plane-trail"></span>
+                    <span class="plane-wing"></span>
+                    <span class="plane-tail"></span>
+                    <span class="plane-fuselage"></span>
+                    <span class="plane-cockpit"></span>
+                </div>
+            </div>
+            <article class="feature-card">
+                <h2>Upgraded feel</h2>
+                <p>
+                    • Camera sway tracks every lane change for a fuller 3D illusion.<br>
+                    • Parallax skyscrapers, contrailing traffic, and a glowing runway ladder your depth cues.<br>
+                    • The hero jet is redrawn with metallic shading, afterburn pulses, and procedural exhaust.
+                </p>
+            </article>
+            <article class="feature-card">
+                <h2>Systems &amp; scoring</h2>
+                <p>
+                    • Freighters join drones and turbulence pods for multi-size dodging.<br>
+                    • HUD now tracks combo chains, altitude percentage, and indicated airspeed.<br>
+                    • Jet trails and runway strips are all procedural &mdash; tweak anything without external art.
+                </p>
+            </article>
+        </div>
+    </section>
 
-    <h2>How to launch</h2>
-    <ul>
-        <li>Install <a href="https://www.pygame.org/news" target="_blank" rel="noreferrer">pygame</a> if you do not already have it:<br><code>pip install pygame</code></li>
-        <li>Run the game from your terminal:<br><code>python plane_jumpers.py</code></li>
-    </ul>
+    <section class="list-section">
+        <h2>How to launch</h2>
+        <ul>
+            <li>Install <a href="https://www.pygame.org/news" target="_blank" rel="noreferrer">pygame</a> (3.9+ recommended):<br><code>python -m pip install pygame</code></li>
+            <li>Play in a window:<br><code>python plane_jumpers.py</code></li>
+            <li>CI / headless capture:<br><code>SDL_VIDEODRIVER=dummy python plane_jumpers.py --headless --frames 600 --screenshot artifacts/plane_jumpers.png</code></li>
+        </ul>
+    </section>
 
-    <h2>Controls</h2>
-    <ul>
-        <li><strong>Left / Right</strong> (or A / D) &mdash; bank across three aerial lanes</li>
-        <li><strong>Space / W / Up Arrow</strong> &mdash; pop upward to clear low-flying drones</li>
-        <li><strong>Esc / Q</strong> &mdash; exit instantly</li>
-        <li><strong>Enter</strong> &mdash; restart after a crash landing</li>
-    </ul>
-
-    <h2>What’s new</h2>
-    <ul>
-        <li>Pseudo-3D lane projection with glowing guides, sunlit clouds, and volumetric shadows.</li>
-        <li>Dynamic stunt plane sprite with jet trails, barrel-roll banking, and invulnerability shield pulses.</li>
-        <li>Expanded obstacle set including shimmer drones and turbulence pods, plus combo scoring for ring streaks.</li>
-        <li>Speed-line VFX, parallax sky layers, and a cinematic HUD to showcase your best flights.</li>
-    </ul>
+    <section class="list-section">
+        <h2>Controls</h2>
+        <ul>
+            <li><strong>Left / Right</strong> (or A / D) &mdash; bank across the three air lanes</li>
+            <li><strong>Space / W / Up Arrow</strong> &mdash; climb to clear cargo freighters and drones</li>
+            <li><strong>Esc / Q</strong> &mdash; exit instantly</li>
+            <li><strong>Enter</strong> &mdash; restart after a crash landing</li>
+        </ul>
+    </section>
 
     <footer>
-        Everything is still procedurally drawn inside <code>plane_jumpers.py</code>, so you can tweak lane
-        geometry, speeds, colours, and visual effects without hunting for asset files.
+        Everything is still procedurally drawn inside <code>plane_jumpers.py</code>. Adjust skyline palettes, runway
+        geometry, obstacle cadence, or HUD details to suit your vibe &mdash; no spritesheets required.
     </footer>
 </main>
 </body>

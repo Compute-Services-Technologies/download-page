@@ -2,7 +2,10 @@
 
 This module uses pygame to render an endless runner inspired by Subway Surfers
 but themed around aerobatic planes weaving through floating rings and traffic.
-Everything is procedurally drawn so no external art assets are required.
+Highlights include camera-swayed perspective lines, a luminous runway grid,
+parallax skyscrapers, ambient air traffic, and a redesigned hero jet with
+afterburn pulses and procedural exhaust. Everything is still drawn on the fly
+so no external art assets are required.
 
 Run the game directly to open the interactive window:
 
@@ -61,22 +64,24 @@ SPEEDLINE_SPAWN = 0.12  # chance per frame
 
 # Colours
 BG_GRADIENT_TOP = (8, 28, 56)
-BG_GRADIENT_BOTTOM = (32, 88, 136)
-SUN_COLOR = (252, 188, 96)
-LANE_GLOW = (64, 142, 255)
+BG_GRADIENT_BOTTOM = (96, 168, 236)
+SUN_COLOR = (252, 196, 122)
+LANE_GLOW = (64, 152, 255)
 HUD_COLOR = (235, 244, 255)
 WARNING_COLOR = (255, 88, 120)
 TRAIL_COLOR = (148, 218, 255)
 
 
 class Perspective:
-    """Project lane indices into screen coordinates with scale."""
+    """Project lane indices into screen coordinates with camera sway."""
 
     def __init__(self) -> None:
         self.horizon = HORIZON_Y
         self.ground = GROUND_Y
         self.lane_near = LANE_NEAR
         self.lane_far = LANE_FAR
+        self.camera_offset = 0.0
+        self._target_offset = 0.0
 
     def _depth_t(self, y: float) -> float:
         if y <= self.horizon:
@@ -89,11 +94,22 @@ class Perspective:
         t = self._depth_t(y)
         far = self.lane_far[lane]
         near = self.lane_near[lane]
-        return far * (1.0 - t) + near * t
+        base = far * (1.0 - t) + near * t
+        sway = self.camera_offset * (1.0 - 0.75 * t) * WIDTH * 0.24
+        lane_splay = (lane - 1) * self.camera_offset * (1.0 - t) * WIDTH * 0.08
+        return base + sway + lane_splay
 
     def scale(self, y: float, *, bias: float = 1.0) -> float:
         t = self._depth_t(y)
         return 0.34 + 0.92 * t * bias
+
+    def update_camera(self, dt_ms: int, lane_index: int, roll: float) -> None:
+        dt = dt_ms / 1000.0
+        lane_target = (lane_index - 1) * 0.18
+        roll_target = max(-1.0, min(1.0, roll / 32.0)) * 0.1
+        self._target_offset = lane_target + roll_target
+        blend = min(1.0, 6.5 * dt)
+        self.camera_offset += (self._target_offset - self.camera_offset) * blend
 
 
 class SkyBackdrop:
@@ -204,6 +220,156 @@ class SpeedLine:
         surface.blit(line_surface, (0, 0))
 
 
+class GroundPlane:
+    def __init__(self, perspective: Perspective) -> None:
+        self.perspective = perspective
+        self.flow = 0.0
+
+    def update(self, dt_ms: int, speed: float) -> None:
+        self.flow = (self.flow + speed * (dt_ms / 1000.0) * 0.0024) % 1.0
+
+    def draw(self, surface: pygame.Surface) -> None:
+        ground = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        left_horizon = self.perspective.lane_x(0, HORIZON_Y) - 240
+        right_horizon = self.perspective.lane_x(2, HORIZON_Y) + 240
+        base_polygon = [
+            (0, HEIGHT),
+            (WIDTH, HEIGHT),
+            (right_horizon, HORIZON_Y),
+            (left_horizon, HORIZON_Y),
+        ]
+        pygame.draw.polygon(ground, (16, 34, 68, 200), base_polygon)
+
+        depth = -self.flow
+        stripe_spacing = 0.12
+        while depth < 1.15:
+            y1_depth = max(0.0, depth)
+            y2_depth = depth + stripe_spacing
+            if y2_depth <= 0.0:
+                depth += stripe_spacing
+                continue
+            if y1_depth > 1.0:
+                break
+            y1 = HORIZON_Y + (GROUND_Y - HORIZON_Y) * y1_depth
+            y2 = HORIZON_Y + (GROUND_Y - HORIZON_Y) * min(1.0, y2_depth)
+            width1 = 24 + 240 * y1_depth
+            width2 = 24 + 240 * min(1.0, y2_depth)
+            left1 = self.perspective.lane_x(1, y1) - width1
+            right1 = self.perspective.lane_x(1, y1) + width1
+            left2 = self.perspective.lane_x(1, y2) - width2
+            right2 = self.perspective.lane_x(1, y2) + width2
+            alpha = max(0, min(200, int(200 * (1.0 - y1_depth * 0.82))))
+            color = (180, 220, 255, alpha)
+            pygame.draw.polygon(ground, color, [(left1, y1), (right1, y1), (right2, y2), (left2, y2)])
+            depth += stripe_spacing
+
+        edge_color = (36, 80, 140, 130)
+        edge_width = 180
+        pygame.draw.polygon(
+            ground,
+            edge_color,
+            [
+                (self.perspective.lane_x(0, GROUND_Y) - edge_width, GROUND_Y),
+                (self.perspective.lane_x(0, HORIZON_Y) - 140, HORIZON_Y),
+                (left_horizon, HORIZON_Y),
+                (0, HEIGHT),
+            ],
+        )
+        pygame.draw.polygon(
+            ground,
+            edge_color,
+            [
+                (WIDTH, HEIGHT),
+                (right_horizon, HORIZON_Y),
+                (self.perspective.lane_x(2, HORIZON_Y) + 140, HORIZON_Y),
+                (self.perspective.lane_x(2, GROUND_Y) + edge_width, GROUND_Y),
+            ],
+        )
+
+        surface.blit(ground, (0, 0))
+
+
+class CityLayer:
+    def __init__(self, *, offset: float, speed_scale: float, color: Tuple[int, int, int]) -> None:
+        self.offset = offset
+        self.speed_scale = speed_scale
+        self.color = color
+        self.structures: List[Tuple[float, float, float, float]] = []
+        self._bootstrap()
+
+    def _bootstrap(self) -> None:
+        x = -WIDTH * 0.1
+        while x < WIDTH * 1.2:
+            width = random.uniform(60, 160)
+            height = random.uniform(70, 190)
+            taper = random.uniform(0.0, 14.0)
+            self.structures.append((x, width, height, taper))
+            x += width * 0.7
+
+    def update(self, dt_ms: int, base_speed: float) -> None:
+        dt = dt_ms / 1000.0
+        travel = base_speed * self.speed_scale * dt
+        updated: List[Tuple[float, float, float, float]] = []
+        for x, width, height, taper in self.structures:
+            x -= travel
+            if x + width < -160:
+                continue
+            updated.append((x, width, height, taper))
+        self.structures = updated
+        while self.structures and self.structures[-1][0] + self.structures[-1][1] < WIDTH * 1.2:
+            width = random.uniform(60, 180)
+            height = random.uniform(90, 220)
+            taper = random.uniform(0.0, 16.0)
+            last_x = self.structures[-1][0] + self.structures[-1][1]
+            self.structures.append((last_x + random.uniform(24, 80), width, height, taper))
+        if not self.structures:
+            self._bootstrap()
+
+    def draw(self, surface: pygame.Surface) -> None:
+        skyline = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        base_y = HORIZON_Y + self.offset
+        for x, width, height, taper in self.structures:
+            rect = pygame.Rect(int(x), int(base_y - height), int(width), int(height))
+            pygame.draw.rect(skyline, (*self.color, 180), rect)
+            if taper > 1.0:
+                top = pygame.Surface((int(width), int(taper)), pygame.SRCALPHA)
+                pygame.draw.polygon(
+                    top,
+                    (min(255, self.color[0] + 20), min(255, self.color[1] + 20), min(255, self.color[2] + 20), 160),
+                    [(0, int(taper)), (int(width / 2), 0), (int(width), int(taper))],
+                )
+                skyline.blit(top, (int(x), int(base_y - height - taper)))
+        surface.blit(skyline, (0, 0))
+
+
+@dataclass
+class AmbientPlane:
+    x: float
+    y: float
+    speed: float
+    scale: float
+    phase: float = field(default_factory=lambda: random.uniform(0.0, math.tau))
+
+    def update(self, dt_ms: int) -> bool:
+        dt = dt_ms / 1000.0
+        self.phase += 0.8 * dt
+        self.x -= self.speed * dt
+        self.y += math.sin(self.phase) * 8.0 * dt
+        return self.x > -160
+
+    def draw(self, surface: pygame.Surface) -> None:
+        base = pygame.Surface((140, 64), pygame.SRCALPHA)
+        pygame.draw.polygon(base, (200, 230, 255), [(12, 32), (68, 18), (128, 32), (68, 44)])
+        pygame.draw.polygon(base, (140, 190, 255), [(36, 32), (74, 24), (112, 32), (74, 40)])
+        pygame.draw.polygon(base, (255, 140, 110), [(42, 36), (64, 8), (54, 36)])
+        pygame.draw.circle(base, (255, 255, 255), (104, 30), 6)
+        size = (max(2, int(base.get_width() * self.scale)), max(2, int(base.get_height() * self.scale)))
+        scaled = pygame.transform.smoothscale(base, size)
+        rotated = pygame.transform.rotozoom(scaled, math.sin(self.phase) * 6.0, 1.0)
+        rect = rotated.get_rect(center=(int(self.x), int(self.y)))
+        surface.blit(rotated, rect)
+
+
 @dataclass
 class LaneActor:
     lane: int
@@ -269,6 +435,19 @@ class TurbulencePod(LaneActor):
         super().__init__(lane, pos_y, base, wobble_speed=2.1, wobble_magnitude=14)
 
 
+class SkyFreighter(LaneActor):
+    def __init__(self, lane: int, pos_y: float) -> None:
+        base = pygame.Surface((220, 160), pygame.SRCALPHA)
+        pygame.draw.polygon(base, (180, 208, 230), [(30, 88), (180, 48), (210, 60), (180, 108), (30, 96)])
+        pygame.draw.polygon(base, (120, 160, 210), [(30, 88), (180, 48), (210, 60), (180, 108), (30, 96)], 6)
+        pygame.draw.ellipse(base, (220, 244, 255), (96, 44, 80, 48))
+        pygame.draw.rect(base, (255, 140, 110), (18, 86, 24, 18))
+        pygame.draw.polygon(base, (255, 220, 180), [(42, 82), (70, 52), (84, 86)])
+        pygame.draw.polygon(base, (255, 220, 180), [(42, 102), (70, 132), (84, 100)])
+        pygame.draw.ellipse(base, (20, 28, 46, 180), (24, 88, 180, 18))
+        super().__init__(lane, pos_y, base, wobble_speed=1.2, wobble_magnitude=6)
+
+
 class Plane:
     def __init__(self, perspective: Perspective) -> None:
         self.perspective = perspective
@@ -286,21 +465,40 @@ class Plane:
         self.render_image = self.base_image
         self.render_rect = self.base_image.get_rect()
         self.shadow_rect = pygame.Rect(0, 0, 0, 0)
+        self.glow_phase = 0.0
 
     def _build_sprite(self) -> pygame.Surface:
-        surface = pygame.Surface((180, 120), pygame.SRCALPHA)
-        body_points = [(20, 60), (120, 28), (160, 60), (120, 92)]
-        pygame.draw.polygon(surface, (180, 220, 255), body_points)
-        pygame.draw.polygon(surface, (90, 140, 220), body_points, 6)
-        pygame.draw.ellipse(surface, (80, 120, 200), (50, 42, 96, 36))
-        pygame.draw.ellipse(surface, (255, 255, 255), (86, 46, 32, 18))
-        wing_points = [(36, 54), (110, 12), (94, 60), (110, 108), (36, 66)]
-        pygame.draw.polygon(surface, (255, 110, 96), wing_points)
-        pygame.draw.polygon(surface, (255, 200, 160), wing_points, 4)
-        tail_points = [(28, 42), (60, 60), (28, 78)]
-        pygame.draw.polygon(surface, (70, 120, 210), tail_points)
-        pygame.draw.line(surface, (255, 200, 160), (20, 60), (4, 52), 6)
-        pygame.draw.line(surface, (255, 200, 160), (20, 60), (4, 68), 6)
+        surface = pygame.Surface((220, 140), pygame.SRCALPHA)
+        fuselage = [(24, 68), (142, 34), (204, 52), (142, 102), (24, 72)]
+        pygame.draw.polygon(surface, (188, 228, 255), fuselage)
+        pygame.draw.polygon(surface, (86, 134, 216), fuselage, 6)
+        nose = pygame.Surface((120, 76), pygame.SRCALPHA)
+        pygame.draw.ellipse(nose, (210, 240, 255), (0, 0, 120, 76))
+        pygame.draw.ellipse(nose, (120, 170, 240), (12, 12, 96, 48))
+        surface.blit(nose, (82, 32))
+        canopy = pygame.Surface((90, 54), pygame.SRCALPHA)
+        pygame.draw.ellipse(canopy, (36, 64, 120), (0, 0, 90, 54))
+        pygame.draw.ellipse(canopy, (130, 200, 255, 220), (10, 6, 70, 36))
+        pygame.draw.ellipse(canopy, (255, 255, 255, 150), (18, 10, 42, 22))
+        surface.blit(canopy, (70, 38))
+        tail = pygame.Surface((82, 80), pygame.SRCALPHA)
+        pygame.draw.polygon(tail, (72, 122, 210), [(0, 60), (64, 12), (64, 108)])
+        pygame.draw.polygon(tail, (180, 220, 255), [(8, 60), (48, 34), (48, 86)])
+        surface.blit(tail, (18, 26))
+        wing = pygame.Surface((200, 120), pygame.SRCALPHA)
+        pygame.draw.polygon(wing, (255, 112, 96), [(24, 72), (110, 16), (160, 24), (116, 72), (160, 120), (110, 128), (24, 84)])
+        pygame.draw.polygon(wing, (255, 190, 160), [(28, 72), (110, 28), (150, 34), (112, 74), (150, 118), (110, 122), (28, 82)], 4)
+        pygame.draw.polygon(wing, (255, 220, 180, 90), [(40, 74), (110, 36), (142, 42), (110, 74), (142, 112), (110, 118), (40, 82)])
+        surface.blit(wing, (0, 0))
+        stabilizer = pygame.Surface((120, 70), pygame.SRCALPHA)
+        pygame.draw.polygon(stabilizer, (240, 180, 120), [(8, 36), (94, 22), (112, 36), (94, 48), (8, 42)])
+        pygame.draw.polygon(stabilizer, (255, 220, 180), [(14, 36), (90, 28), (102, 36), (90, 44), (14, 40)], 4)
+        surface.blit(stabilizer, (36, 76))
+        jet = pygame.Surface((60, 60), pygame.SRCALPHA)
+        pygame.draw.circle(jet, (255, 200, 160), (30, 30), 14)
+        pygame.draw.circle(jet, (255, 120, 80), (30, 30), 8)
+        pygame.draw.circle(jet, (255, 240, 220, 120), (30, 30), 20, 4)
+        surface.blit(jet, (18, 50))
         return surface
 
     def reset(self, time_now: int) -> None:
@@ -331,7 +529,9 @@ class Plane:
         self.apply_gravity(frame_scale)
         self.roll += (self.target_roll - self.roll) * min(1.0, 0.16 * frame_scale)
         self.target_roll *= 0.7
+        self.perspective.update_camera(dt_ms, self.lane_index, self.roll)
         self.trail_timer += dt_ms
+        self.glow_phase = (self.glow_phase + dt_ms / 320.0) % math.tau
         if self.trail_timer > 45:
             self.trail_timer = 0
             tail_x, tail_y = self._tail_world()
@@ -373,6 +573,13 @@ class Plane:
         for particle in self.trail:
             particle.draw(trail_surface)
         surface.blit(trail_surface, (0, 0), special_flags=pygame.BLEND_ADD)
+        # Engine glow
+        glow_surface = pygame.Surface((160, 160), pygame.SRCALPHA)
+        pulse = 160 + int(60 * math.sin(self.glow_phase))
+        pygame.draw.circle(glow_surface, (255, 160, 120, pulse), (80, 120), 36)
+        pygame.draw.circle(glow_surface, (255, 220, 180, pulse // 2), (80, 120), 58, 6)
+        glow_rect = glow_surface.get_rect(center=(int(self.render_rect.centerx - self.render_rect.width * 0.44), int(self.render_rect.centery + self.render_rect.height * 0.12)))
+        surface.blit(glow_surface, glow_rect, special_flags=pygame.BLEND_ADD)
         # Draw plane
         surface.blit(self.render_image, self.render_rect)
 
@@ -380,7 +587,15 @@ class Plane:
         return time_now < self.invulnerable_until
 
 
-def render_hud(surface: pygame.Surface, score: int, best: int, combo: int, time_now: int, plane: Plane) -> None:
+def render_hud(
+    surface: pygame.Surface,
+    score: int,
+    best: int,
+    combo: int,
+    time_now: int,
+    plane: Plane,
+    air_speed: float,
+) -> None:
     font_big = pygame.font.Font(None, 48)
     font_small = pygame.font.Font(None, 30)
     hud_surface = pygame.Surface((WIDTH, 110), pygame.SRCALPHA)
@@ -389,12 +604,17 @@ def render_hud(surface: pygame.Surface, score: int, best: int, combo: int, time_
     text_best = font_small.render(f"Best {best}", True, HUD_COLOR)
     hud_surface.blit(text_score, (40, 30))
     hud_surface.blit(text_best, (WIDTH - 200, 40))
+    altitude_ratio = plane.altitude / PLANE_ALTITUDE_LIMIT
+    altitude_text = font_small.render(f"Altitude {int(altitude_ratio * 100):02d}%", True, (180, 220, 255))
+    speed_text = font_small.render(f"IAS {int(air_speed):03d} kt", True, (180, 220, 255))
+    hud_surface.blit(speed_text, (40, 66))
+    hud_surface.blit(altitude_text, (WIDTH - 220, 66))
     if combo > 1:
         combo_text = font_small.render(f"x{combo} Air Combo!", True, (255, 210, 120))
-        hud_surface.blit(combo_text, (40, 66))
+        hud_surface.blit(combo_text, (WIDTH // 2 - combo_text.get_width() // 2, 66))
     if plane.is_invulnerable(time_now):
         invuln_text = font_small.render("Aegis Shield", True, (130, 220, 255))
-        hud_surface.blit(invuln_text, (WIDTH - 220, 70))
+        hud_surface.blit(invuln_text, (WIDTH - 220, 82))
     surface.blit(hud_surface, (0, 0))
 
 
@@ -409,9 +629,10 @@ def draw_lane_guides(surface: pygame.Surface, perspective: Perspective) -> None:
             y2 = HORIZON_Y + (GROUND_Y - HORIZON_Y) * t2
             x1 = perspective.lane_x(lane, y1)
             x2 = perspective.lane_x(lane, y2)
-            intensity = int(140 + 90 * t1)
+            intensity = int(120 + 110 * t1)
             color = (*LANE_GLOW[:3], intensity)
-            pygame.draw.line(lane_surface, color, (x1, y1), (x2, y2), 4)
+            width = max(2, int(3 + 6 * t2))
+            pygame.draw.line(lane_surface, color, (x1, y1), (x2, y2), width)
     surface.blit(lane_surface, (0, 0), special_flags=pygame.BLEND_ADD)
 
 def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = None) -> None:
@@ -422,10 +643,14 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
     perspective = Perspective()
 
     backdrop = SkyBackdrop()
+    city_far = CityLayer(offset=6, speed_scale=0.14, color=(24, 58, 112))
+    city_near = CityLayer(offset=28, speed_scale=0.28, color=(38, 88, 162))
+    ground = GroundPlane(perspective)
     plane = Plane(perspective)
     rings: List[SkyRing] = []
     obstacles: List[LaneActor] = []
     speed_lines: List[SpeedLine] = []
+    ambient_planes: List[AmbientPlane] = []
 
     score = 0
     best = 0
@@ -480,7 +705,11 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
 
         # Spawn logic
         if not game_over and time_now >= next_obstacle:
-            actor_cls = random.choice([SkyDrone, TurbulencePod])
+            actor_cls = random.choices(
+                [SkyDrone, TurbulencePod, SkyFreighter],
+                weights=(0.44, 0.32, 0.24),
+                k=1,
+            )[0]
             spawn = actor_cls(random.randrange(3), HORIZON_Y - 140)
             spawn.update_geometry(perspective)
             obstacles.append(spawn)
@@ -493,6 +722,10 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
 
         # Update game state
         backdrop.update(dt_ms)
+        scene_speed = base_speed if not game_over else base_speed * 0.18
+        city_far.update(dt_ms, scene_speed)
+        city_near.update(dt_ms, scene_speed)
+        ground.update(dt_ms, scene_speed)
         if not game_over:
             base_speed += SPEED_INCREMENT * (dt_ms / 1000.0)
             plane.update(dt_ms, time_now)
@@ -506,6 +739,17 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
                 line.update(dt_ms, base_speed)
                 if line.y > HEIGHT or line.opacity <= 0:
                     speed_lines.remove(line)
+
+            if random.random() < 0.006:
+                spawn_y = random.uniform(80, HORIZON_Y - 20)
+                ambient_planes.append(
+                    AmbientPlane(
+                        x=WIDTH + 120,
+                        y=spawn_y,
+                        speed=random.uniform(40.0, 110.0),
+                        scale=random.uniform(0.4, 0.8),
+                    )
+                )
 
             # Cleanup actors
             obstacles[:] = [actor for actor in obstacles if not actor.offscreen()]
@@ -537,9 +781,18 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
         else:
             plane.update(dt_ms, time_now)
 
+        for bg_plane in list(ambient_planes):
+            if not bg_plane.update(dt_ms):
+                ambient_planes.remove(bg_plane)
+
         # Drawing
         backdrop.draw(screen)
+        city_far.draw(screen)
+        city_near.draw(screen)
+        ground.draw(screen)
         draw_lane_guides(screen, perspective)
+        for bg_plane in ambient_planes:
+            bg_plane.draw(screen)
         for line in speed_lines:
             line.draw(screen, perspective)
         for ring in rings:
@@ -547,7 +800,15 @@ def main(*, max_frames: Optional[int] = None, screenshot_path: Optional[str] = N
         for obstacle in obstacles:
             obstacle.draw(screen)
         plane.draw(screen)
-        render_hud(screen, score, best, combo if combo_timer else 0, time_now, plane)
+        render_hud(
+            screen,
+            score,
+            best,
+            combo if combo_timer else 0,
+            time_now,
+            plane,
+            base_speed * 0.92,
+        )
 
         if game_over:
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
