@@ -3,167 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Files - Compute Services</title>
+    <title>Plane Jumpers</title>
     <style>
-        /* Page Background */
+        :root {
+            color-scheme: dark light;
+            --bg: #04172e;
+            --card: rgba(10, 30, 62, 0.85);
+            --accent: #48d1ff;
+            --accent-soft: rgba(72, 209, 255, 0.2);
+            --text: #e8f1ff;
+            --muted: rgba(232, 241, 255, 0.82);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
-            text-align: center;
-        }
-
-        /* Navigation Bar */
-        .navbar {
-            background-color: #007bff;
-            padding: 15px 20px;
+            min-height: 100vh;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(circle at 20% 20%, rgba(90, 160, 255, 0.2), transparent 46%),
+                linear-gradient(160deg, var(--bg), #0a2d55 55%, #031222 100%);
+            color: var(--text);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            padding: clamp(32px, 6vw, 64px) 16px;
         }
 
-        /* Logo and Text */
-        .navbar .logo {
-            display: flex;
-            align-items: center;  /* Align items horizontally */
+        main {
+            width: min(900px, 100%);
+            background: var(--card);
+            border-radius: 30px;
+            padding: clamp(28px, 6vw, 52px);
+            box-shadow: 0 28px 82px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(16px);
+            display: grid;
+            gap: clamp(28px, 6vw, 46px);
         }
 
-        .navbar .logo img {
-            height: 100px;
-            width: 100px;
-        }
-
-        .navbar .logo h1 {
-            color: white;
-            font-size: 24px;
-            margin-left: 8px;  /* Small space between logo and text */
-            margin: 0;  /* Removes default margin from <h1> */
-        }
-
-        /* Navbar Links */
-        .navbar ul {
-            list-style: none;
-            display: flex;
-            gap: 20px;
-        }
-
-        .navbar ul li {
-            display: inline;
-        }
-
-        .navbar ul li a {
-            color: #fff;
-            text-decoration: none;
-            padding: 8px 12px;
-            transition: background 0.3s;
-        }
-
-        .navbar ul li a:hover {
-            background-color: #0056b3;
-            border-radius: 5px;
-        }
-
-        /* Content Area */
-        .content {
-            max-width: 900px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
         h1 {
-            color: #007bff;
-            margin-bottom: 30px;
+            margin: 0;
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
-        /* Download Buttons */
-        .download-btn {
-            display: inline-block;
-            margin: 10px;
-            padding: 15px 20px;
-            text-decoration: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        .download-btn:hover {
-            background-color: #0056b3;
+        h2 {
+            margin: 0 0 12px;
+            font-size: clamp(1.4rem, 2.8vw, 2rem);
+            letter-spacing: 0.02em;
         }
 
-        /* Footer */
-        footer {
-            text-align: center;
+        p {
+            margin: 0;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        code {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: rgba(9, 30, 54, 0.88);
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        li + li {
+            margin-top: 10px;
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        .hero {
+            display: grid;
+            gap: 16px;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+        }
+
+        .hero-wrap {
+            display: grid;
+            gap: clamp(24px, 5vw, 40px);
+        }
+
+        .preview-grid {
+            display: grid;
+            gap: clamp(18px, 3vw, 28px);
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .feature-card {
             padding: 20px;
-            background-color: #333;
-            color: #fff;
-            margin-top: 50px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(18, 42, 78, 0.9), rgba(12, 30, 54, 0.88));
+            border: 1px solid rgba(90, 170, 255, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(90, 170, 255, 0.12);
+            display: grid;
+            gap: 10px;
+        }
+
+        .plane-preview {
+            position: relative;
+            height: 200px;
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(35, 70, 140, 0.18), rgba(2, 12, 28, 0.8));
+            box-shadow: inset 0 0 0 1px rgba(90, 170, 255, 0.18);
+            overflow: hidden;
+        }
+
+        .plane-preview::before {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            background: radial-gradient(circle at 60% 20%, rgba(120, 210, 255, 0.35), transparent 70%),
+                radial-gradient(circle at 20% 80%, rgba(255, 150, 110, 0.28), transparent 65%);
+            filter: blur(0.5px);
+        }
+
+        .plane-body {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            width: 180px;
+            height: 80px;
+            transform: translate(-50%, -50%) rotateX(30deg) rotateY(0deg);
+            transform-style: preserve-3d;
+            animation: bank 4.4s ease-in-out infinite;
+        }
+
+        .plane-fuselage {
+            position: absolute;
+            inset: 0;
+            border-radius: 60px;
+            background: linear-gradient(90deg, #d9f0ff, #7fb5ff 50%, #d4ecff 100%);
+            box-shadow: 0 18px 28px rgba(0, 0, 0, 0.32);
+            z-index: 3;
+        }
+
+        .plane-wing,
+        .plane-tail {
+            position: absolute;
+            background: linear-gradient(120deg, rgba(255, 120, 100, 0.95), rgba(255, 200, 170, 0.9));
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+        }
+
+        .plane-wing {
+            width: 220px;
+            height: 34px;
+            top: 22px;
+            left: -20px;
+            border-radius: 20px;
+            transform: rotateX(40deg);
+            z-index: 2;
+        }
+
+        .plane-tail {
+            width: 90px;
+            height: 30px;
+            left: -20px;
+            top: 14px;
+            border-radius: 16px;
+            transform: rotateX(40deg) rotateZ(-16deg);
+            z-index: 1;
+        }
+
+        .plane-cockpit {
+            position: absolute;
+            width: 76px;
+            height: 38px;
+            top: 8px;
+            left: 62px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgba(40, 70, 120, 0.85), rgba(150, 210, 255, 0.9));
+            z-index: 4;
+        }
+
+        .plane-trail {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            left: -72px;
+            top: 44px;
+            background: radial-gradient(circle, rgba(255, 170, 130, 0.8), transparent 70%);
+            filter: blur(12px);
+            opacity: 0.8;
+            animation: trail 1.8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes bank {
+            0%,
+            100% {
+                transform: translate(-50%, -50%) rotateX(30deg) rotateY(-12deg) rotateZ(-4deg);
+            }
+            50% {
+                transform: translate(-50%, -50%) rotateX(30deg) rotateY(16deg) rotateZ(5deg);
+            }
+        }
+
+        @keyframes trail {
+            0%,
+            100% {
+                transform: scale(0.9);
+                opacity: 0.65;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.95;
+            }
+        }
+
+        .list-section {
+            display: grid;
+            gap: 16px;
+        }
+
+        .list-section ul {
+            background: rgba(4, 18, 36, 0.45);
+            padding: 18px 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(90, 170, 255, 0.18);
+            box-shadow: inset 0 0 0 1px rgba(72, 209, 255, 0.08);
+        }
+
+        footer {
+            margin-top: 0;
+            font-size: 0.95rem;
+            color: rgba(232, 241, 255, 0.74);
+        }
+
+        @media (max-width: 620px) {
+            .plane-preview {
+                height: 160px;
+            }
+
+            .plane-body {
+                transform: translate(-50%, -50%) scale(0.8) rotateX(30deg);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <a href="/"><img src="cropped_image.png" alt="Compute Services Logo"></a>
-                <h1>‎ ‎ ‎ Compute Services Technology</h1>
+<main>
+    <section class="hero-wrap">
+        <div class="hero">
+            <h1>Plane Jumpers</h1>
+            <p>
+                Chase rings through a sunlit skyline in this aero-runner inspired by Subway Surfers. The latest
+                build delivers camera-swayed perspective, a high-altitude runway, and a sculpted stunt plane that
+                banks, trails, and glows like it just cleared a cloud stack.
+            </p>
+        </div>
+        <div class="preview-grid">
+            <div class="plane-preview">
+                <div class="plane-body">
+                    <span class="plane-trail"></span>
+                    <span class="plane-wing"></span>
+                    <span class="plane-tail"></span>
+                    <span class="plane-fuselage"></span>
+                    <span class="plane-cockpit"></span>
+                </div>
             </div>
-            <ul class="nav-links">
-                <li><a href="https://computeservices.org">Home</a></li>
-                <li><a href="https://computeservices.org/about">About</a></li>
-                <li><a href="https://computeservices.org/downloads">Downloads</a></li>
-                <li><a href="https://computeservices.org/api/auth/login">Sign In</a></li>
-            </ul>
-        </nav>
-    </header>
+            <article class="feature-card">
+                <h2>Upgraded feel</h2>
+                <p>
+                    • Camera sway tracks every lane change for a fuller 3D illusion.<br>
+                    • Parallax skyscrapers, contrailing traffic, and a glowing runway ladder your depth cues.<br>
+                    • The hero jet is redrawn with metallic shading, afterburn pulses, and procedural exhaust.
+                </p>
+            </article>
+            <article class="feature-card">
+                <h2>Systems &amp; scoring</h2>
+                <p>
+                    • Freighters join drones and turbulence pods for multi-size dodging.<br>
+                    • HUD now tracks combo chains, altitude percentage, and indicated airspeed.<br>
+                    • Difficulty presets and RNG seeding let you script practice runs or reproducible captures.<br>
+                    • Jet trails and runway strips are all procedural &mdash; tweak anything without external art.
+                </p>
+            </article>
+        </div>
+    </section>
 
-    <!-- Main Content Area -->
-    <div class="content">
-        <h1>Download Files</h1>
-        <p>Click on the buttons below to download the files:</p>
+    <section class="list-section">
+        <h2>How to launch</h2>
+        <ul>
+            <li>Install <a href="https://www.pygame.org/news" target="_blank" rel="noreferrer">pygame</a> (3.9+ recommended):<br><code>python -m pip install pygame</code></li>
+            <li>Play in a window:<br><code>python plane_jumpers.py</code></li>
+            <li>CI / headless capture:<br><code>SDL_VIDEODRIVER=dummy python plane_jumpers.py --headless --frames 600 --screenshot artifacts/plane_jumpers.png</code></li>
+            <li>Lock a practice seed or change pacing:<br><code>python plane_jumpers.py --difficulty ace --seed 2024</code></li>
+        </ul>
+    </section>
 
-        <!-- Download Buttons -->
-        <a href="/downloads/file1.zip" class="download-btn" download>Download File 1</a>
-        <a href="/downloads/file2.zip" class="download-btn" download>Download File 2</a>
-        <a href="/downloads/file3.zip" class="download-btn" download>Download File 3</a>
-        <a href="/downloads/file4.zip" class="download-btn" download>Download File 4</a>
-        <a href="/downloads/file5.zip" class="download-btn" download>Download File 5</a>
-        <a href="/downloads/file6.zip" class="download-btn" download>Download File 6</a>
-        <a href="/downloads/file7.zip" class="download-btn" download>Download File 7</a>
-        <a href="/downloads/file8.zip" class="download-btn" download>Download File 8</a>
-        <a href="/downloads/file9.zip" class="download-btn" download>Download File 9</a>
-        <a href="/downloads/file10.zip" class="download-btn" download>Download File 10</a>
-        <a href="/downloads/file11.zip" class="download-btn" download>Download File 11</a>
-        <a href="/downloads/file12.zip" class="download-btn" download>Download File 12</a>
-        <a href="/downloads/file13.zip" class="download-btn" download>Download File 13</a>
-        <a href="/downloads/file14.zip" class="download-btn" download>Download File 14</a>
-        <a href="/downloads/file15.zip" class="download-btn" download>Download File 15</a>
-        <a href="/downloads/file16.zip" class="download-btn" download>Download File 16</a>
-        <a href="/downloads/file17.zip" class="download-btn" download>Download File 17</a>
-        <a href="/downloads/file18.zip" class="download-btn" download>Download File 18</a>
-        <a href="/downloads/file19.zip" class="download-btn" download>Download File 19</a>
-        <a href="/downloads/file20.zip" class="download-btn" download>Download File 20</a>
-        <a href="/downloads/file21.zip" class="download-btn" download>Download File 21</a>
-        <a href="/downloads/file22.zip" class="download-btn" download>Download File 22</a>
-        <a href="/downloads/file23.zip" class="download-btn" download>Download File 23</a>
-        <a href="/downloads/file24.zip" class="download-btn" download>Download File 24</a>
-        <a href="/downloads/file25.zip" class="download-btn" download>Download File 25</a>
-        <a href="/downloads/file26.zip" class="download-btn" download>Download File 26</a>
-        <a href="/downloads/file27.zip" class="download-btn" download>Download File 27</a>
-        <a href="/downloads/file28.zip" class="download-btn" download>Download File 28</a>
-        <a href="/downloads/file29.zip" class="download-btn" download>Download File 29</a>
-        <a href="/downloads/file30.zip" class="download-btn" download>Download File 30</a>
-    </div>
+    <section class="list-section">
+        <h2>Controls</h2>
+        <ul>
+            <li><strong>Left / Right</strong> (or A / D) &mdash; bank across the three air lanes</li>
+            <li><strong>Space / W / Up Arrow</strong> &mdash; climb to clear cargo freighters and drones</li>
+            <li><strong>Esc / Q</strong> &mdash; exit instantly</li>
+            <li><strong>Enter</strong> &mdash; restart after a crash landing</li>
+        </ul>
+    </section>
 
-    <!-- Footer -->
     <footer>
-        <p>&copy; 2024 Compute Services. All rights reserved.</p>
+        Everything is still procedurally drawn inside <code>plane_jumpers.py</code>. Adjust skyline palettes, runway
+        geometry, obstacle cadence, or HUD details to suit your vibe &mdash; no spritesheets required.
     </footer>
-
-    <script src="/js/main.js"></script>
+</main>
 </body>
 </html>
