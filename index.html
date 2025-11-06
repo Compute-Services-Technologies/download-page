@@ -3,167 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Files - Compute Services</title>
+    <title>Plane Jumpers</title>
     <style>
-        /* Page Background */
+        :root {
+            color-scheme: dark light;
+            --bg: #061428;
+            --card: rgba(14, 32, 64, 0.82);
+            --accent: #40c4ff;
+            --text: #e8f1ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
-            text-align: center;
-        }
-
-        /* Navigation Bar */
-        .navbar {
-            background-color: #007bff;
-            padding: 15px 20px;
+            min-height: 100vh;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(160deg, var(--bg), #103a69 55%, #051b2d 100%);
+            color: var(--text);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            padding: 40px 16px;
         }
 
-        /* Logo and Text */
-        .navbar .logo {
-            display: flex;
-            align-items: center;  /* Align items horizontally */
+        main {
+            width: min(720px, 100%);
+            background: var(--card);
+            border-radius: 28px;
+            padding: clamp(24px, 6vw, 48px);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(14px);
         }
 
-        .navbar .logo img {
-            height: 100px;
-            width: 100px;
-        }
-
-        .navbar .logo h1 {
-            color: white;
-            font-size: 24px;
-            margin-left: 8px;  /* Small space between logo and text */
-            margin: 0;  /* Removes default margin from <h1> */
-        }
-
-        /* Navbar Links */
-        .navbar ul {
-            list-style: none;
-            display: flex;
-            gap: 20px;
-        }
-
-        .navbar ul li {
-            display: inline;
-        }
-
-        .navbar ul li a {
-            color: #fff;
-            text-decoration: none;
-            padding: 8px 12px;
-            transition: background 0.3s;
-        }
-
-        .navbar ul li a:hover {
-            background-color: #0056b3;
-            border-radius: 5px;
-        }
-
-        /* Content Area */
-        .content {
-            max-width: 900px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
         h1 {
-            color: #007bff;
-            margin-bottom: 30px;
+            margin: 0 0 12px;
+            font-size: clamp(2.2rem, 4vw, 3.4rem);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        /* Download Buttons */
-        .download-btn {
+        p {
+            margin: 0 0 20px;
+            line-height: 1.7;
+            color: rgba(232, 241, 255, 0.82);
+        }
+
+        code {
             display: inline-block;
-            margin: 10px;
-            padding: 15px 20px;
-            text-decoration: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        .download-btn:hover {
-            background-color: #0056b3;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(9, 24, 48, 0.8);
+            color: var(--accent);
+            font-size: 0.95rem;
         }
 
-        /* Footer */
+        ul {
+            padding-left: 20px;
+            margin: 0 0 24px;
+        }
+
+        li + li {
+            margin-top: 12px;
+        }
+
         footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #333;
-            color: #fff;
-            margin-top: 50px;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        a {
+            color: var(--accent);
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <a href="/"><img src="cropped_image.png" alt="Compute Services Logo"></a>
-                <h1>‎ ‎ ‎ Compute Services Technology</h1>
-            </div>
-            <ul class="nav-links">
-                <li><a href="https://computeservices.org">Home</a></li>
-                <li><a href="https://computeservices.org/about">About</a></li>
-                <li><a href="https://computeservices.org/downloads">Downloads</a></li>
-                <li><a href="https://computeservices.org/api/auth/login">Sign In</a></li>
-            </ul>
-        </nav>
-    </header>
+<main>
+    <h1>Plane Jumpers</h1>
+    <p>
+        Plane Jumpers now plays like a neon-flight remix of Subway Surfers. Bank a shimmering
+        stunt plane through a pseudo-3D skyline, skim glowing rings, and dodge drones and
+        turbulence pods that streak toward the camera. Procedural lighting, parallax clouds,
+        and speed trails sell the depth without shipping any texture files.
+    </p>
 
-    <!-- Main Content Area -->
-    <div class="content">
-        <h1>Download Files</h1>
-        <p>Click on the buttons below to download the files:</p>
+    <h2>How to launch</h2>
+    <ul>
+        <li>Install <a href="https://www.pygame.org/news" target="_blank" rel="noreferrer">pygame</a> if you do not already have it:<br><code>pip install pygame</code></li>
+        <li>Run the game from your terminal:<br><code>python plane_jumpers.py</code></li>
+    </ul>
 
-        <!-- Download Buttons -->
-        <a href="/downloads/file1.zip" class="download-btn" download>Download File 1</a>
-        <a href="/downloads/file2.zip" class="download-btn" download>Download File 2</a>
-        <a href="/downloads/file3.zip" class="download-btn" download>Download File 3</a>
-        <a href="/downloads/file4.zip" class="download-btn" download>Download File 4</a>
-        <a href="/downloads/file5.zip" class="download-btn" download>Download File 5</a>
-        <a href="/downloads/file6.zip" class="download-btn" download>Download File 6</a>
-        <a href="/downloads/file7.zip" class="download-btn" download>Download File 7</a>
-        <a href="/downloads/file8.zip" class="download-btn" download>Download File 8</a>
-        <a href="/downloads/file9.zip" class="download-btn" download>Download File 9</a>
-        <a href="/downloads/file10.zip" class="download-btn" download>Download File 10</a>
-        <a href="/downloads/file11.zip" class="download-btn" download>Download File 11</a>
-        <a href="/downloads/file12.zip" class="download-btn" download>Download File 12</a>
-        <a href="/downloads/file13.zip" class="download-btn" download>Download File 13</a>
-        <a href="/downloads/file14.zip" class="download-btn" download>Download File 14</a>
-        <a href="/downloads/file15.zip" class="download-btn" download>Download File 15</a>
-        <a href="/downloads/file16.zip" class="download-btn" download>Download File 16</a>
-        <a href="/downloads/file17.zip" class="download-btn" download>Download File 17</a>
-        <a href="/downloads/file18.zip" class="download-btn" download>Download File 18</a>
-        <a href="/downloads/file19.zip" class="download-btn" download>Download File 19</a>
-        <a href="/downloads/file20.zip" class="download-btn" download>Download File 20</a>
-        <a href="/downloads/file21.zip" class="download-btn" download>Download File 21</a>
-        <a href="/downloads/file22.zip" class="download-btn" download>Download File 22</a>
-        <a href="/downloads/file23.zip" class="download-btn" download>Download File 23</a>
-        <a href="/downloads/file24.zip" class="download-btn" download>Download File 24</a>
-        <a href="/downloads/file25.zip" class="download-btn" download>Download File 25</a>
-        <a href="/downloads/file26.zip" class="download-btn" download>Download File 26</a>
-        <a href="/downloads/file27.zip" class="download-btn" download>Download File 27</a>
-        <a href="/downloads/file28.zip" class="download-btn" download>Download File 28</a>
-        <a href="/downloads/file29.zip" class="download-btn" download>Download File 29</a>
-        <a href="/downloads/file30.zip" class="download-btn" download>Download File 30</a>
-    </div>
+    <h2>Controls</h2>
+    <ul>
+        <li><strong>Left / Right</strong> (or A / D) &mdash; bank across three aerial lanes</li>
+        <li><strong>Space / W / Up Arrow</strong> &mdash; pop upward to clear low-flying drones</li>
+        <li><strong>Esc / Q</strong> &mdash; exit instantly</li>
+        <li><strong>Enter</strong> &mdash; restart after a crash landing</li>
+    </ul>
 
-    <!-- Footer -->
+    <h2>What’s new</h2>
+    <ul>
+        <li>Pseudo-3D lane projection with glowing guides, sunlit clouds, and volumetric shadows.</li>
+        <li>Dynamic stunt plane sprite with jet trails, barrel-roll banking, and invulnerability shield pulses.</li>
+        <li>Expanded obstacle set including shimmer drones and turbulence pods, plus combo scoring for ring streaks.</li>
+        <li>Speed-line VFX, parallax sky layers, and a cinematic HUD to showcase your best flights.</li>
+    </ul>
+
     <footer>
-        <p>&copy; 2024 Compute Services. All rights reserved.</p>
+        Everything is still procedurally drawn inside <code>plane_jumpers.py</code>, so you can tweak lane
+        geometry, speeds, colours, and visual effects without hunting for asset files.
     </footer>
-
-    <script src="/js/main.js"></script>
+</main>
 </body>
 </html>
